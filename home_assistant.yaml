@@ -1,0 +1,71 @@
+---
+
+- name: Install home assistant
+  hosts: all
+  become: true
+  remote_user: admin
+  vars:
+    container_count: 4
+    default_container_name: docker
+    default_container_image: ubuntu
+    default_container_command: sleep 1
+
+  tasks:
+  - name: Run the equivalent of "apt-get update" as a separate step
+    ansible.builtin.apt:
+      update_cache: yes
+
+  - name: check the current directory
+    command: pwd
+      
+  - name: Upgrade the OS (apt-get dist-upgrade)
+    ansible.builtin.apt:
+      upgrade: dist
+  
+  - name: Install a list of packages
+    ansible.builtin.apt:
+      pkg:
+      - apparmor
+      - jq 
+      - wget 
+      - curl 
+      - udisks2 
+      - libglib2.0-bin 
+      - network-manager 
+      - dbus 
+      - systemd-journal-remote
+      - apt-transport-https
+      - ca-certificates
+      - software-properties-common
+      - python3-pip
+      - virtualenv
+      - python3-setuptools
+  
+  - name: Add Docker GPG apt Key
+    apt_key:
+      url: https://download.docker.com/linux/ubuntu/gpg
+      state: present
+
+  - name: Add Docker Repository
+    apt_repository:
+      repo: deb https://download.docker.com/linux/ubuntu focal stable
+      state: present
+
+  - name: Update apt and install docker-ce
+    apt:
+      name: docker-ce
+      state: latest
+      update_cache: true
+
+  - name: Install Docker Module for Python
+    pip:
+      name: docker
+
+  - name: Download and install os agent for linux
+    apt:
+      deb: https://github.com/home-assistant/os-agent/releases/latest/download/os-agent_1.4.1_linux_x86_64.deb
+
+
+  - name: Download and install Home assistant supervised
+    apt:
+      deb: https://github.com/home-assistant/supervised-installer/releases/latest/download/homeassistant-supervised.deb
